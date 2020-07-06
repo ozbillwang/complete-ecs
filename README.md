@@ -18,9 +18,11 @@ terraform plan
 terraform apply
 ```
 
-Wait for about one minutes, the application should be ready. You can access it via ALB DNS.
+Wait for about one minutes, the application should be ready. The registered targets should be at `Health` status
 
 ![target group health check](images/image.png)
+
+You can access it via ALB DNS.
 
 Note that this example may create resources which can cost money (AWS EC2 instances, net gateway, application load balancer, etc). Run `terraform destroy` when you don't need these resources.
 
