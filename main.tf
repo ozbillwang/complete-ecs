@@ -32,22 +32,22 @@ module "vpc" {
 
 #----- ECS --------
 module "ecs" {
-  source             = "../../"
+  source             = "terraform-aws-modules/ecs/aws"
   name               = local.name
   container_insights = true
 }
 
 module "ec2-profile" {
-  source = "../../modules/ecs-instance-profile"
+  source = "terraform-aws-modules/ecs/aws//modules/ecs-instance-profile"
   name   = local.name
 }
 
 #----- ECS  Services--------
 
 module "nginx" {
-  source     = "./service-nginx"
-  cluster_id = module.ecs.this_ecs_cluster_id
-  vpc_id = module.vpc.vpc_id
+  source         = "./service-nginx"
+  cluster_id     = module.ecs.this_ecs_cluster_id
+  vpc_id         = module.vpc.vpc_id
   public_subnets = module.vpc.public_subnets
 }
 
@@ -70,6 +70,32 @@ data "aws_ami" "amazon_linux_ecs" {
   }
 }
 
+### Security
+
+resource "aws_security_group" "tg_sg" {
+  description = "controls access to the application ELB"
+
+  vpc_id = module.vpc.vpc_id
+  name   = "tf-ecs-tg-sg"
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 32768
+    to_port     = 65535
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+
+    cidr_blocks = [
+      "0.0.0.0/0",
+    ]
+  }
+}
+
 module "this" {
   source  = "terraform-aws-modules/autoscaling/aws"
   version = "~> 3.0"
@@ -81,7 +107,7 @@ module "this" {
 
   image_id             = data.aws_ami.amazon_linux_ecs.id
   instance_type        = "t2.micro"
-  security_groups      = [module.vpc.default_security_group_id]
+  security_groups      = [module.vpc.default_security_group_id, aws_security_group.tg_sg.id]
   iam_instance_profile = module.ec2-profile.this_iam_instance_profile_id
   user_data            = data.template_file.user_data.rendered
 

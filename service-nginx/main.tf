@@ -1,3 +1,12 @@
+data "aws_region" "current" {}
+
+data "template_file" "task_definition" {
+  template = file("${path.module}/templates/task-definition-nginx.tpl")
+  vars = {
+    region = data.aws_region.current.name
+  }
+}
+
 resource "aws_cloudwatch_log_group" "nginx" {
   name              = "nginx"
   retention_in_days = 1
@@ -6,29 +15,7 @@ resource "aws_cloudwatch_log_group" "nginx" {
 resource "aws_ecs_task_definition" "nginx" {
   family = "nginx"
 
-  container_definitions = <<EOF
-[
-  {
-    "name": "nginx",
-    "image": "nginx",
-    "cpu": 0,
-    "memory": 128,
-    "portMappings": [
-      {
-        "containerPort": 80
-      }
-    ],
-    "logConfiguration": {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-region": "ap-southeast-2",
-        "awslogs-group": "nginx",
-        "awslogs-stream-prefix": "complete-ecs"
-      }
-    }
-  }
-]
-EOF
+  container_definitions = data.template_file.task_definition.rendered
 }
 
 ### Security
@@ -100,5 +87,5 @@ resource "aws_ecs_service" "nginx" {
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 0
 
-  depends_on = [aws_alb_target_group.main]
+  depends_on = [aws_alb_target_group.main, aws_alb.main]
 }
