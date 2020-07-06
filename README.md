@@ -1,6 +1,11 @@
 # Complete ECS
 
-This repo is [filter-branched](https://docs.github.com/en/github/using-git/splitting-a-subfolder-out-into-a-new-repository) from https://github.com/terraform-aws-modules/terraform-aws-ecs/tree/master/examples/complete-ecs
+This repo is [filter-branched](https://docs.github.com/en/github/using-git/splitting-a-subfolder-out-into-a-new-repository) from [terraform ECS module](https://github.com/terraform-aws-modules/terraform-aws-ecs/tree/master/examples/complete-ecs) with fully functions.
+
+* Full VPC stack
+* ECS Cluster
+* ECS service with task definition
+* Application load balancer (ALB)
 
 ## Why work with ALB only
 
