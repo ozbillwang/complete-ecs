@@ -1,3 +1,7 @@
+variable "key_name" {
+  default = "back2home"
+}
+
 locals {
   name        = "complete-ecs"
   environment = "dev"
@@ -96,6 +100,30 @@ resource "aws_security_group" "tg_sg" {
   }
 }
 
+resource "aws_security_group" "tg_sg_ssh" {
+  description = "controls ssh access to the application ELB"
+
+  vpc_id = module.vpc.vpc_id
+  name   = "tf-ecs-tg-sg-ssh"
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 22
+    to_port     = 22
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+
+    cidr_blocks = [
+      "0.0.0.0/0",
+    ]
+  }
+}
+
 module "this" {
   source  = "terraform-aws-modules/autoscaling/aws"
   version = "~> 3.0"
@@ -107,7 +135,8 @@ module "this" {
 
   image_id             = data.aws_ami.amazon_linux_ecs.id
   instance_type        = "t2.micro"
-  security_groups      = [module.vpc.default_security_group_id, aws_security_group.tg_sg.id]
+  key_name             = var.key_name
+  security_groups      = [module.vpc.default_security_group_id, aws_security_group.tg_sg.id, aws_security_group.tg_sg_ssh.id]
   iam_instance_profile = module.ec2-profile.this_iam_instance_profile_id
   user_data            = data.template_file.user_data.rendered
 
